@@ -336,8 +336,17 @@ namespace SIPSorceryMedia.FFmpeg
                     }
                     else if (_encoderContext->width != width || _encoderContext->height != height)
                     {
-                        _encoderContext->width = width;
-                        _encoderContext->height = height;
+                        // Reset encoder
+                        if (!_isDisposed && _encoderContext != null && _isEncoderInitialised)
+                        {
+                            _isEncoderInitialised = false;
+                            fixed (AVCodecContext** pCtx = &_encoderContext)
+                            {
+                                ffmpeg.avcodec_free_context(pCtx);
+                            }
+                        }
+
+                        InitialiseEncoder(codecID, width, height, fps);
                     }
 
                     int _linesizeY = width;

@@ -29,6 +29,9 @@ namespace SIPSorceryMedia.FFmpeg
         internal FFmpegVideoEncoder? _videoEncoder;
         internal bool _forceKeyFrame;
 
+        internal int? _encWidth;
+        internal int? _encHeight;
+
         internal MediaFormatManager<VideoFormat> _videoFormatManager;
 
         public event EncodedSampleDelegate? OnVideoSourceEncodedSample;
@@ -105,6 +108,12 @@ namespace SIPSorceryMedia.FFmpeg
             }
         }
 
+        public void SetVideoEnoderResolution(int? toWidth, int? toHeight)
+        {
+            _encWidth = toWidth;
+            _encHeight = toHeight;
+        }
+
         public void ForceKeyFrame() => _forceKeyFrame = true;
         public void ExternalVideoSourceRawSample(uint durationMilliseconds, int width, int height, byte[] sample, VideoPixelFormatsEnum pixelFormat) => throw new NotImplementedException();
         public void ExternalVideoSourceRawSampleFaster(uint durationMilliseconds, RawImage rawImage) => throw new NotImplementedException();
@@ -160,12 +169,15 @@ namespace SIPSorceryMedia.FFmpeg
                 {
                     if (_videoFrameYUV420PConverter == null ||
                         _videoFrameYUV420PConverter.SourceWidth != width ||
-                        _videoFrameYUV420PConverter.SourceHeight != height)
+                        _videoFrameYUV420PConverter.SourceHeight != height ||
+                        (_encWidth != null && _videoFrameYUV420PConverter.DestinationWidth != _encWidth) ||
+                        (_encHeight != null && _videoFrameYUV420PConverter.DestinationHeight != _encHeight))
                     {
                         _videoFrameYUV420PConverter = new VideoFrameConverter(
                             width, height,
                             (AVPixelFormat)frame.format,
-                            width, height,
+                            _encWidth ?? width,
+                            _encHeight ?? height,
                             AVPixelFormat.AV_PIX_FMT_YUV420P);
                         logger.LogDebug($"Frame format: [{frame.format}]");
                     }
